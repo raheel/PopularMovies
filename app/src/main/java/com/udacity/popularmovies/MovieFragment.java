@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -44,7 +45,6 @@ public class MovieFragment extends Fragment {
     public static final String MOVIE_KEY = Movie.class.getName();
     private final String LOG_TAG = MovieFragment.class.getSimpleName();
 
-    private boolean twoPane = false;
     private static MovieAdapter movieAdapter;
     private static ArrayList<Movie> movies = new ArrayList<Movie>();
 
@@ -61,7 +61,7 @@ public class MovieFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        System.out.println("container = " + container + " twoPane, " + twoPane);
+        System.out.println("container = " + container + " twoPane, " + isTwoPaneMode());
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         movieAdapter = new MovieAdapter(getActivity(), movies);
@@ -77,14 +77,14 @@ public class MovieFragment extends Fragment {
                     MovieAdapter adapter = (MovieAdapter) parent.getAdapter();
                     Movie movie = adapter.getItem(position);
                     System.out.println("gridview: movie = " + movie);
-                    System.out.println("onClick: twoPane = " + twoPane);
+                    System.out.println("onClick: twoPane = " + isTwoPaneMode());
                     if (movie == null) {
                         return;
                     }
                     Bundle bundle = new Bundle();
                     bundle.putParcelable(MOVIE_KEY, movie);
 
-                    if (twoPane){
+                    if (isTwoPaneMode()){
                         FragmentTransaction ft = getFragmentManager().beginTransaction();
                         DetailsFragment fragment = new DetailsFragment();
                         fragment.setArguments(bundle);
@@ -118,6 +118,8 @@ public class MovieFragment extends Fragment {
             showFavoritesOnly = favorite;
             first = false;
         }
+
+
 
 
         System.out.println("MovieFragment.onResume");
@@ -274,6 +276,7 @@ public class MovieFragment extends Fragment {
 
 
     private boolean showFavoritesOnly(Activity activity) {
+        System.out.println("activity = [" + activity + "]");
         return PreferenceManager.getDefaultSharedPreferences(activity).getBoolean(
                 activity.getString(R.string.pref_favorites_key), false);
     }
@@ -340,9 +343,11 @@ public class MovieFragment extends Fragment {
         return false;
     }
 
-    public void setTwoPane(boolean twoPane) {
-        this.twoPane = twoPane;
+    private boolean isTwoPaneMode(){
+        return (getResources().getBoolean(R.bool.two_pane_mode));
     }
+
 }
+
 
 

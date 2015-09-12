@@ -124,7 +124,7 @@ public class DetailsFragment extends Fragment {
                                 }
                             }
                     );
-                    trailerContainer.setTag(trailer.getId());
+                    trailerContainer.setTag(trailer.getKey());
                     TextView textView = (TextView) item.findViewById(R.id.trailer_name);
                     textView.setText(trailer.getName());
 
@@ -134,6 +134,12 @@ public class DetailsFragment extends Fragment {
                     }
                     parent.addView(item);
                 }
+                //remove Trailers heading if none found
+                if (count==0){
+                    View trailersHeading = activity.findViewById(R.id.trailers_heading);
+                    ViewGroup root = (ViewGroup) trailersHeading.getParent();
+                    root.removeView(trailersHeading);
+                 }
             }
 
             @Override
@@ -167,6 +173,13 @@ public class DetailsFragment extends Fragment {
                         item.removeView(item.findViewById(R.id.separator));
                     }
                     parent.addView(item);
+                }
+
+                //remove Reviews heading if none found
+                if (count==0){
+                    View reviewsHeading = activity.findViewById(R.id.reviews_heading);
+                    ViewGroup root = (ViewGroup) reviewsHeading.getParent();
+                    root.removeView(reviewsHeading);
                 }
 
             }

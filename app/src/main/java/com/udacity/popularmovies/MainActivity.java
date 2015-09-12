@@ -1,6 +1,7 @@
 package com.udacity.popularmovies;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -20,6 +21,9 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if(getResources().getBoolean(R.bool.landscape_only)){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
         System.out.println("**************************************MainActivity.onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -31,8 +35,6 @@ public class MainActivity extends ActionBarActivity {
                         .replace(R.id.movie_detail_container, new DetailsFragment())
                         .commit();
                 MovieFragment movieFragment = (MovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_movies);
-                movieFragment.setTwoPane(true);
-
             }
         }
 
