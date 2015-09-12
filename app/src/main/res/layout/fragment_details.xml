@@ -1,83 +1,235 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.udacity.popularmovies.DetailsActivity$PlaceholderFragment">
+    <!--
+    android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.udacity.popularmovies.DetailsActivity$PlaceholderFragment">
+    -->
 
 
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/scrollView"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" >
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true">
 
+        <!-- Begin Parent Linear Layout -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:textAlignment="center">
 
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:textAlignment="center"
-        android:gravity="center">
-
-
+            <!-- Begin Title -->
             <TextView
+                android:id="@+id/title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
                 android:background="@color/green"
-                android:padding="@dimen/poster_padding_bottom"
-                android:id="@+id/title" />
-            <View
-                android:layout_width="fill_parent"
-                android:layout_height="0.2dp"
-                android:id="@+id/separator"
-                android:visibility="visible"
-                android:background="@android:color/darker_gray"/>
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            >
+                android:paddingBottom="@dimen/poster_padding_bottom"
+                android:paddingLeft="@dimen/poster_padding_left"
+                android:paddingTop="@dimen/poster_padding_top"
+                android:textColor="@color/white"
+                android:textSize="@dimen/details_header_font_size" />
+            <!-- end Title -->
 
-                <ImageView
-                    android:id="@+id/poster"
-                android:layout_width="@dimen/poster_width"
-                android:layout_height="@dimen/poster_height"/>
-
+            <!-- Begin Details Linear Layout-->
             <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
+                android:paddingBottom="@dimen/details_vertical_margin"
+                android:paddingLeft="@dimen/details_horizontal_margin"
+                android:paddingRight="@dimen/details_horizontal_margin"
+                android:paddingTop="@dimen/details_vertical_margin">
+                <!-- Begin Details Top Linear Layout-->
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="fill_parent"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:id="@+id/rating" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
 
-                <TextView
+                    <ImageView
+                        android:id="@+id/poster"
+                        android:layout_width="@dimen/poster_width"
+                        android:layout_height="@dimen/poster_height" />
+
+                    <!-- Begin Details Right Linear Layout-->
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <ImageButton android:id="@+id/favoriteButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="fill_parent"
+                            android:src="@drawable/favorite"
+                            android:background="#00ffffff"
+                            />
+
+                        <TextView
+                            android:id="@+id/release_date_label"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="20dp"
+                            android:textStyle="bold|italic"
+                            android:text="@string/release_date"
+                            android:textColor="@color/black" />
+
+                        <TextView
+                            android:id="@+id/release_date"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="16dp"
+                            android:textColor="@color/gray"
+                            android:layout_marginBottom="10dp"/>
+
+
+                        <TextView
+                            android:id="@+id/genre_label"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="20dp"
+                            android:textStyle="bold|italic"
+                            android:text="@string/genres"
+                            android:textColor="@color/black" />
+
+                        <TextView
+                            android:id="@+id/genres"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="16dp"
+                            android:textColor="@color/gray"
+                            android:layout_marginBottom="10dp"/>
+
+                        <TextView
+                            android:id="@+id/rating_bar_label"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:text="@string/rating"
+                            android:textSize="20dp"
+                            android:textStyle="bold|italic"
+                            android:textColor="@color/black"/>
+
+                        <RatingBar
+                            android:id="@+id/rating_bar"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:numStars="10"
+                            android:stepSize=".5"
+                            style="?android:attr/ratingBarStyleSmall"
+                            android:layout_marginBottom="10dp"
+                        />
+
+                        <TextView
+                            android:id="@+id/vote_count_label"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="20dp"
+                            android:textStyle="bold|italic"
+                            android:text="@string/vote_count"
+                            android:textColor="@color/black" />
+
+                        <TextView
+                            android:id="@+id/vote_count"
+                            android:layout_width="match_parent"
+                            android:layout_height="fill_parent"
+                            android:textSize="16dp"
+                            android:textColor="@color/gray"
+                            android:layout_marginBottom="10dp"/>
+                    </LinearLayout>
+                    <!-- End Details Left Linear Layout-->
+
+                </LinearLayout>
+                <!-- End Details Top Linear Layout-->
+
+                <!-- Begin Details Bottom Linear Layout-->
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="fill_parent"
-                    android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:id="@+id/release_date" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    >
+<!-- Synopsis -->
+                    <TextView
+                        android:id="@+id/synopsis_heading"
+                        android:background="@color/gray"
+                        android:textColor="@color/white"
+                        android:text="@string/synopsis_heading"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textStyle="bold|italic"
+                        />
+
+                    <TextView
+                        android:id="@+id/synopsis"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        />
+                    <!-- End Synopsis -->
+
+                    <View
+                        android:layout_width="fill_parent"
+                        android:layout_height="1px"
+                        android:background="@color/gray" />
+
+                    !-- Trailers -->
+                    <TextView
+                        android:id="@+id/trailers_heading"
+                        android:text="@string/trailers_heading"
+                        android:background="@color/gray"
+                        android:textColor="@color/white"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textStyle="bold|italic"
+                        />
+
+                    <LinearLayout
+                        android:id="@+id/trailers"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical" />
+                    <!-- End Trailers -->
+
+                    <!-- Reviews -->
+                    <TextView
+                        android:id="@+id/reviews_heading"
+                        android:text="@string/reviews_heading"
+                        android:background="@color/gray"
+                        android:textColor="@color/white"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:textStyle="bold|italic"
+                        />
+
+                    <LinearLayout
+                        android:id="@+id/reviews"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical" />
+                    <!-- End Reviews -->
+
+                </LinearLayout>
+                <!-- End Details Bottom Linear Layout-->
 
             </LinearLayout>
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:id="@+id/synopsis" />
+            <!-- Begin Details Linear Layout-->
 
         </LinearLayout>
+        <!-- End Parent Linear Layout -->
+
     </ScrollView>
 
 </RelativeLayout>

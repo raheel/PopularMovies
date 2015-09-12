@@ -3,8 +3,13 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
+    <dimen name="details_horizontal_margin">8dp</dimen>
+    <dimen name="details_vertical_margin">4dp</dimen>
+
     <dimen name="poster_width">185dp</dimen>
     <dimen name="poster_height">277dp</dimen>
-    <dimen name="poster_padding_top">4dp</dimen>
-    <dimen name="poster_padding_bottom">4dp</dimen>
+    <dimen name="poster_padding_top">18dp</dimen>
+    <dimen name="poster_padding_bottom">18dp</dimen>
+    <dimen name="poster_padding_left">8dp</dimen>
+    <dimen name="details_header_font_size">40dp</dimen>
 </resources>

@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
+import com.udacity.popularmovies.rest.Movie;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -28,14 +29,20 @@ public class MovieAdapter extends ArrayAdapter<Movie> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        Movie movie = getItem(position);
+        ViewHolder viewHolder;
 
+        Movie movie = getItem(position);
+        System.out.println("movie position = " + position);
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.grid_item_movie, parent, false);
+            viewHolder = new ViewHolder();
+            viewHolder.imageView = (ImageView) convertView.findViewById(R.id.grid_item_poster);
+            convertView.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        ImageView posterView = (ImageView) convertView.findViewById(R.id.grid_item_poster);
-        Picasso.with(getContext()).load(Movie.getPosterUri(movie)).into(posterView);
+        Picasso.with(getContext()).load(Movie.getPosterUri(movie)).into(viewHolder.imageView);
 
         return convertView;
     }
@@ -44,7 +51,7 @@ public class MovieAdapter extends ArrayAdapter<Movie> {
         return new ArrayList<Movie>(movies);
     }
 
-    public void setMovies(ArrayList<Movie> movies) {
-        this.movies = movies;
+    private static class ViewHolder {
+        ImageView imageView;
     }
 }

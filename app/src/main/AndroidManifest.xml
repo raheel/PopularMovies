@@ -27,6 +27,11 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" >
         </activity>
+
+        <provider
+            android:name="com.udacity.popularmovies.provider.MovieProvider"
+            android:authorities="com.udacity.popularmovies.provider"
+            android:exported="false" />
     </application>
 
 </manifest>

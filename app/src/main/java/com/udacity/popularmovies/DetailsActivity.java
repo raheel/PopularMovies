@@ -1,27 +1,41 @@
 package com.udacity.popularmovies;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
+import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.udacity.popularmovies.rest.Movie;
+import com.udacity.popularmovies.rest.MovieAPI;
+import com.udacity.popularmovies.rest.MovieClient;
+import com.udacity.popularmovies.rest.Review;
+import com.udacity.popularmovies.rest.ReviewResults;
+import com.udacity.popularmovies.rest.Trailer;
+import com.udacity.popularmovies.rest.TrailerResults;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 
 public class DetailsActivity extends ActionBarActivity {
-
-
+    private int movieId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,34 +71,6 @@ public class DetailsActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class DetailsFragment extends Fragment {
-        private final String LOG_TAG = DetailsFragment.class.getSimpleName();
-
-        public DetailsFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_details, container, false);
-            Intent intent = getActivity().getIntent();
-            Bundle bundle = intent.getExtras();
-            if (intent != null && bundle.containsKey(Movie.class.getName())) {
-                Movie movie = (Movie)bundle.getParcelable(Movie.class.getName());
-                ((TextView)rootView.findViewById(R.id.title)).setText(movie.getTitle());
-                ((TextView)rootView.findViewById(R.id.rating)).setText("User Rating:" + movie.getVoteAverage() + "/10");
-                ((TextView)rootView.findViewById(R.id.release_date)).setText("Release Date: " + movie.getReleaseDate());
-                ((TextView)rootView.findViewById(R.id.synopsis)).setText(movie.getOverview());
-
-                ImageView posterView = (ImageView)rootView.findViewById(R.id.poster);
-                Picasso.with(getActivity()).load(Movie.getPosterUri(movie)).into(posterView);
-            }
 
 
-            return rootView;
-        }
-    }
 }

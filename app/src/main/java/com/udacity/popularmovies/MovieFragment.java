@@ -7,33 +7,35 @@ package com.udacity.popularmovies;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.udacity.popularmovies.provider.moviedetails.MovieDetailsContentValues;
+import com.udacity.popularmovies.provider.moviedetails.MovieDetailsCursor;
+import com.udacity.popularmovies.provider.moviedetails.MovieDetailsSelection;
+import com.udacity.popularmovies.rest.Movie;
+import com.udacity.popularmovies.rest.MovieAPI;
+import com.udacity.popularmovies.rest.MovieClient;
+import com.udacity.popularmovies.rest.MovieResults;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -42,178 +44,59 @@ public class MovieFragment extends Fragment {
     public static final String MOVIE_KEY = Movie.class.getName();
     private final String LOG_TAG = MovieFragment.class.getSimpleName();
 
+    private boolean twoPane = false;
     private static MovieAdapter movieAdapter;
     private static ArrayList<Movie> movies = new ArrayList<Movie>();
 
+    private ProgressDialog dialog;
+
     private String sortPreference;
+    private boolean showFavoritesOnly;
+    private boolean first = true;
+    private String favoriteIds;
+
     public MovieFragment() {
-    }
-
-    private static class MovieFetchTask extends AsyncTask<String, String, Movie[]> {
-        private ProgressDialog dialog;
-        private Activity activity;
-
-        private final String LOG_TAG = MovieFetchTask.class.getSimpleName();
-        private static final String MOVIE_BASE_URL = "http://api.themoviedb.org/3/discover/movie?";
-        private static final String API_KEY = "e32af3ba543806ff0b602d8389fd151c";
-        private static final String SORT_PARAM = "sort_by";
-        private static final String API_PARAM = "api_key";
-
-
-        public MovieFetchTask(Activity activity){
-            this.activity = activity;
-            this.dialog = new ProgressDialog(activity);
-        }
-
-        @Override
-        protected Movie[] doInBackground(String[] params) {
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            String movieJsonStr = null;
-            String sortBy = PreferenceManager.getDefaultSharedPreferences(activity).getString(
-                    activity.getString(R.string.pref_sort_by_key),
-                    activity.getString(R.string.pref_most_popular)
-            ) + ".desc";
-
-            try {
-                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
-                        .appendQueryParameter(SORT_PARAM, sortBy)
-                        .appendQueryParameter(API_PARAM, API_KEY)
-                        .build();
-
-                Log.d(LOG_TAG, "URI: " + builtUri);
-
-                URL url = new URL(builtUri.toString());
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    //for debugging purposes
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-
-                movieJsonStr = buffer.toString();
-                Log.d(LOG_TAG, "JSON: " + movieJsonStr);
-            }catch(IOException e){
-                Log.e(LOG_TAG, "Error " + e.getMessage() + " " + e.getStackTrace(), e);
-                return null;
-            }finally{
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getMovieDataFromJson(movieJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            dialog.setMessage(activity.getResources().getString(R.string.loading_movies));
-            dialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(Movie [] m) {
-            if (movies==null){
-                if (dialog.isShowing()) {
-                    dialog.dismiss();
-                }
-                return;
-            }
-
-            movies = new ArrayList<Movie>(Arrays.asList(m));
-            movieAdapter.clear();
-
-            for (Movie movie :  movies){
-                movieAdapter.add(movie);
-            }
-
-            movieAdapter.notifyDataSetChanged();
-
-            if (dialog.isShowing()) {
-                dialog.dismiss();
-            }
-        }
-
-
-        private Movie[] getMovieDataFromJson(String movieJsonStr) throws JSONException {
-            JSONObject movieJson = new JSONObject(movieJsonStr);
-            JSONArray movieArray = movieJson.getJSONArray("results");
-
-            List<Movie> movies = new ArrayList<>();
-            for (int i = 0; i < movieArray.length(); i++) {
-
-                JSONObject movieObject = movieArray.getJSONObject(i);
-
-                Movie movie = new Movie();
-                movie.setId(movieObject.getInt("id"));
-                movie.setTitle(movieObject.getString("title"));
-                movie.setOriginalTitle(movieObject.getString("original_title"));
-                movie.setOverview(movieObject.getString("overview"));
-                movie.setBackdropPath(movieObject.getString("backdrop_path"));
-                movie.setPosterPath(movieObject.getString("poster_path"));
-                movie.setReleaseDate(movieObject.getString("release_date"));
-                movie.setOriginalLanguage(movieObject.getString("original_language"));
-                movie.setPopularity(movieObject.getDouble("popularity"));
-                movie.setVoteAverage(movieObject.getInt("vote_average"));
-                movie.setVoteCount(movieObject.getInt("vote_count"));
-                movie.setAdult(movieObject.getBoolean("adult"));
-                movie.setVideo(movieObject.getBoolean("video"));
-                movies.add(movie);
-            }
-
-            return movies.toArray(new Movie[0]);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        System.out.println("container = " + container + " twoPane, " + twoPane);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         movieAdapter = new MovieAdapter(getActivity(), movies);
-
-        GridView gridView = (GridView)rootView.findViewById(R.id.grid_view);
-        if (gridView!=null){
+        System.out.println("movies = " + movies);
+        GridView gridView = (GridView) rootView.findViewById(R.id.grid_view);
+        System.out.println("gridView = " + gridView);
+        if (gridView != null) {
             gridView.setAdapter(movieAdapter);
-            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            System.out.println("inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
+            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     MovieAdapter adapter = (MovieAdapter) parent.getAdapter();
                     Movie movie = adapter.getItem(position);
-                    if (movie==null){
+                    System.out.println("gridview: movie = " + movie);
+                    System.out.println("onClick: twoPane = " + twoPane);
+                    if (movie == null) {
                         return;
                     }
-                    Intent intent = new Intent(getActivity(), DetailsActivity.class);
-                    intent.putExtra(MOVIE_KEY, movie);
-                    getActivity().startActivity(intent);
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable(MOVIE_KEY, movie);
+
+                    if (twoPane){
+                        FragmentTransaction ft = getFragmentManager().beginTransaction();
+                        DetailsFragment fragment = new DetailsFragment();
+                        fragment.setArguments(bundle);
+                        ft.replace(R.id.movie_detail_container, fragment);
+                        //FragmentTransaction fragmentTransaction = ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                        ft.commit();
+                    }
+                    else {
+                        Intent intent = new Intent(getActivity(), DetailsActivity.class);
+                        intent.putExtras(bundle);
+                        getActivity().startActivity(intent);
+                    }
                 }
             });
         }
@@ -224,29 +107,100 @@ public class MovieFragment extends Fragment {
 
     @Override
     public void onResume() {
+        System.out.println("*******************************8MovieFragment.onResume");
         //if shared preference has changed, then get data using the new sort order
-        String sort = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(
-                getActivity().getString(R.string.pref_sort_by_key),
-                getActivity().getString(R.string.pref_most_popular));
-        if (sortPreference==null){
-            sortPreference = sort;
+        String sort = getSortByDesc(getActivity());
+        System.out.println("onResume:  = " + sort);
+        boolean favorite = showFavoritesOnly(getActivity());
+        boolean hasFavoriteSelectionChanged = false;
+        if(first || (favorite != showFavoritesOnly)){
+            hasFavoriteSelectionChanged = true;
+            showFavoritesOnly = favorite;
+            first = false;
         }
 
-        if (!sort.equals(sortPreference)){
-            sortPreference = sort;
-            new MovieFetchTask(getActivity()).execute();
+
+        System.out.println("MovieFragment.onResume");
+        boolean hasSortChanged = !sort.equals(sortPreference);
+        boolean haveFavoritesChanged = haveFavoritesChanged(getActivity());
+        sortPreference = sort;
+
+
+
+        showFavoritesOnly = favorite;
+        if (hasSortChanged){
+            if (showFavoritesOnly){
+                showLoadingMoviesDialog();
+                populateFromDB(getActivity(), dialog);
+                System.out.println("onResume: Part 1");
+
+            }
+            else{
+                showLoadingMoviesDialog();
+                MovieAPI movieAPI = MovieClient.getMovieAPI();
+                movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
+                System.out.println("onResume: Part 2");
+
+            }
         }
+        else{
+            if (hasFavoriteSelectionChanged || haveFavoritesChanged){
+                if (showFavoritesOnly){
+                    showLoadingMoviesDialog();
+                    populateFromDB(getActivity(), dialog);
+                    System.out.println("onResume: Part 3");
+
+                }
+                else{
+                    showLoadingMoviesDialog();
+                    MovieAPI movieAPI = MovieClient.getMovieAPI();
+                    movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
+                    System.out.println("onResume: Part 4");
+
+                }
+            }
+            else{
+                System.out.println("onResume: Part 5");
+            }
+        }
+
+
         super.onResume();
+    }
+
+    private boolean haveFavoritesChanged(Activity activity) {
+        String ids = getFavoriteIds(activity);
+        if (ids != null && !ids.equals(favoriteIds)) {
+            this.favoriteIds = ids;
+            return true;
+        }
+        return false;
+    }
+
+    private void showLoadingMoviesDialog(){
+        if (dialog==null) {
+            dialog = new ProgressDialog(getActivity());
+        }
+        dialog.setMessage(getActivity().getResources().getString(R.string.loading_movies));
+        dialog.show();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(savedInstanceState == null || !savedInstanceState.containsKey(MOVIE_KEY)) {
-            new MovieFetchTask(getActivity()).execute();
-        }
-        else {
+        if (savedInstanceState == null || !savedInstanceState.containsKey(MOVIE_KEY)) {
+            System.out.println("***********MovieFragment.onCreate: in if");
+
+            String sortBy = getSortByDesc(getActivity());
+            System.out.println("sortBy = " + sortBy);
+
+            showLoadingMoviesDialog();
+
+            MovieAPI movieAPI = MovieClient.getMovieAPI();
+            movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
+        } else {
+            System.out.println("***********MovieFragment.onCreate: in else");
             List<Movie> movies = savedInstanceState.getParcelableArrayList(MOVIE_KEY);
             movieAdapter.notifyDataSetChanged();
         }
@@ -256,6 +210,138 @@ public class MovieFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList(MOVIE_KEY, movieAdapter.getMovies());
         super.onSaveInstanceState(outState);
+    }
+
+    private class MovieCallback implements Callback<MovieResults> {
+        private ProgressDialog dialog;
+        private Activity activity;
+
+        private MovieCallback(Activity activity, ProgressDialog dialog) {
+            this.activity = activity;
+            this.dialog = dialog;
+        }
+
+        @Override
+        public void success(MovieResults results, Response response) {
+            movieAdapter.clear();
+            String json = new String(((TypedByteArray) response.getBody()).getBytes());
+            //      System.out.println("********moviecallback....results = " + json) ;
+            favoriteIds = getFavoriteIds(this.activity);
+            System.out.println("MovieCallback.success");
+            System.out.println("favoriteIds = " + favoriteIds);
+            System.out.println("movies = " + results.getMovies());
+            for (Movie movie : results.getMovies()) {
+                System.out.println("\t\t ------ movie = " + 1);
+
+                MovieDetailsContentValues values = new MovieDetailsContentValues();
+                values.putJson(new Gson().toJson(movie));
+                values.putMovieId(movie.getId());
+                values.putPopularity(movie.getPopularity());
+                values.putVoteAverage(movie.getVoteAverage());
+                Uri uri = values.insert(activity.getContentResolver());
+                System.out.println("uri = " + uri);
+                movie.setGenres(GenreHelper.getOutput(movie.getGenreIds()));
+                if (shouldAddMovie(getActivity(), favoriteIds, movie)) {
+                    movieAdapter.add(movie);
+                }
+            }
+
+            movieAdapter.notifyDataSetChanged();
+
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
+
+
+        @Override
+        public void failure(RetrofitError error) {
+            populateFromDB(this.activity, this.dialog);
+        }
+    }
+
+
+    private String getSortByDesc(Activity activity) {
+        return getSortBy(activity) + ".desc";
+    }
+
+    private String getSortBy(Activity activity) {
+        return PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(
+                getActivity().getString(R.string.pref_sort_by_key),
+                getActivity().getString(R.string.pref_most_popular)
+        );
+    }
+
+
+    private boolean showFavoritesOnly(Activity activity) {
+        return PreferenceManager.getDefaultSharedPreferences(activity).getBoolean(
+                activity.getString(R.string.pref_favorites_key), false);
+    }
+
+    private void populateFromDB(Activity activity, ProgressDialog dialog) {
+        movieAdapter.clear();
+        MovieDetailsSelection selection = new MovieDetailsSelection();
+        String sortBy = getSortBy(activity);
+        System.out.println("onResume: populateFromDB: sortBy = " + sortBy);
+        if ("popularity".equals(sortBy)) {
+            selection.orderByPopularity(true);
+        } else {
+            selection.orderByVoteAverage(true);
+        }
+        String favoriteIds = getFavoriteIds(getActivity());
+        MovieDetailsCursor movieDetails = selection.query(activity.getContentResolver());
+        int count = 0;
+        while (movieDetails.moveToNext()) {
+            System.out.println("movieDetails.getId() = " + movieDetails.getId() + ", popularity: " + movieDetails.getPopularity() + ", vote average: " + movieDetails.getVoteAverage());
+            Movie movie = new Gson().fromJson(movieDetails.getJson(), Movie.class);
+            movie.setGenres(GenreHelper.getOutput(movie.getGenreIds()));
+            if (shouldAddMovie(getActivity(), favoriteIds, movie)) {
+                count++;
+                movieAdapter.add(movie);
+            }
+        }
+
+        movieAdapter.notifyDataSetChanged();
+
+        if (dialog.isShowing()) {
+            dialog.dismiss();
+        }
+
+        //no favorites
+        if (count == 0 && showFavoritesOnly(getActivity())) {
+            Toast.makeText(getActivity(), getActivity().getString(R.string.no_favorites), Toast.LENGTH_SHORT).show();
+        }
+        //favorites-mode off and no movies from the database
+        else
+        if (count==0){
+            Toast.makeText(getActivity(), getActivity().getString(R.string.loading_movies_error), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    private String getFavoriteIds(Activity activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        return preferences.getString(FavoritesHelper.FAVORITE_KEY, null);
+    }
+
+    private boolean shouldAddMovie(Activity activity, String favoriteIds, Movie movie) {
+        boolean showFavoritesOnly = showFavoritesOnly(activity);
+        System.out.println("MovieCallback.shouldAddMovie");
+        System.out.println("showFavoritesOnly = " + showFavoritesOnly);
+        System.out.println("favoriteIds = " + favoriteIds);
+        if (!showFavoritesOnly) {
+            return true;
+        }
+
+        if (favoriteIds != null) {
+            return favoriteIds.contains(FavoritesHelper.getFavoriteValue(movie.getId()));
+        }
+
+        return false;
+    }
+
+    public void setTwoPane(boolean twoPane) {
+        this.twoPane = twoPane;
     }
 }
 
