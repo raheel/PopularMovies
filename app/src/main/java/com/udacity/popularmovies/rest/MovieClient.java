@@ -28,5 +28,4 @@ public class MovieClient {
     public static MovieAPI getMovieAPI() {
         return movieApi;
     }
-
 }
