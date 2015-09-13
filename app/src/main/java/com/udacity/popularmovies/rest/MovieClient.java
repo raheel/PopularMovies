@@ -12,7 +12,7 @@ import retrofit.http.Path;
  */
 public class MovieClient {
     public static final String API_URL = "http://api.themoviedb.org/3";
-    public static final String API_KEY = "e32af3ba543806ff0b602d8389fd151c";
+    public static final String API_KEY = "";
 
     private static MovieAPI movieApi;
 
