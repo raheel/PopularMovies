@@ -6,6 +6,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,35 +18,22 @@ import android.widget.Button;
 import android.widget.Toast;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if(getResources().getBoolean(R.bool.landscape_only)){
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
-        System.out.println("**************************************MainActivity.onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             if (findViewById(R.id.movie_detail_container) != null) {
-                System.out.println("*****************now inside the moviedetails");
-                //for wider views, two panes should be shown
+                //for larger views, two panes should be shown
+                //in portrait, the details are on the bottom
+                //in landscape. the details are on the right
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.movie_detail_container, new DetailsFragment())
                         .commit();
-                MovieFragment movieFragment = (MovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_movies);
             }
         }
-
-        /*
-        ForecastFragment forecastFragment =  ((ForecastFragment)getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_forecast));
-        forecastFragment.setUseTodayLayout(!mTwoPane);
-
-         */
-
-
     }
 
     @Override

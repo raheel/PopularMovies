@@ -7,8 +7,6 @@ package com.udacity.popularmovies;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -31,7 +29,6 @@ import com.udacity.popularmovies.rest.MovieClient;
 import com.udacity.popularmovies.rest.MovieResults;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -61,23 +58,17 @@ public class MovieFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        System.out.println("container = " + container + " twoPane, " + isTwoPaneMode());
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         movieAdapter = new MovieAdapter(getActivity(), movies);
-        System.out.println("movies = " + movies);
         GridView gridView = (GridView) rootView.findViewById(R.id.grid_view);
-        System.out.println("gridView = " + gridView);
         if (gridView != null) {
             gridView.setAdapter(movieAdapter);
-            System.out.println("inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
             gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     MovieAdapter adapter = (MovieAdapter) parent.getAdapter();
                     Movie movie = adapter.getItem(position);
-                    System.out.println("gridview: movie = " + movie);
-                    System.out.println("onClick: twoPane = " + isTwoPaneMode());
                     if (movie == null) {
                         return;
                     }
@@ -89,7 +80,6 @@ public class MovieFragment extends Fragment {
                         DetailsFragment fragment = new DetailsFragment();
                         fragment.setArguments(bundle);
                         ft.replace(R.id.movie_detail_container, fragment);
-                        //FragmentTransaction fragmentTransaction = ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
                         ft.commit();
                     }
                     else {
@@ -107,11 +97,9 @@ public class MovieFragment extends Fragment {
 
     @Override
     public void onResume() {
-        System.out.println("*******************************8MovieFragment.onResume");
         //if shared preference has changed, then get data using the new sort order
         String sort = getSortByDesc(getActivity());
-        System.out.println("onResume:  = " + sort);
-        boolean favorite = showFavoritesOnly(getActivity());
+        boolean favorite = FavoritesHelper.showFavoritesOnly(getActivity());
         boolean hasFavoriteSelectionChanged = false;
         if(first || (favorite != showFavoritesOnly)){
             hasFavoriteSelectionChanged = true;
@@ -119,50 +107,41 @@ public class MovieFragment extends Fragment {
             first = false;
         }
 
-
-
-
-        System.out.println("MovieFragment.onResume");
         boolean hasSortChanged = !sort.equals(sortPreference);
         boolean haveFavoritesChanged = haveFavoritesChanged(getActivity());
         sortPreference = sort;
 
-
-
         showFavoritesOnly = favorite;
+
+        /*
+        Movies should be only reloaded if
+            1.) sort selection has been changed
+            2.) favorites selection has been changed
+            3.) favorites selection on and a new movie has been favorited
+            Note: Favorites are loaded from the database
+         */
+
         if (hasSortChanged){
             if (showFavoritesOnly){
                 showLoadingMoviesDialog();
                 populateFromDB(getActivity(), dialog);
-                System.out.println("onResume: Part 1");
-
             }
             else{
                 showLoadingMoviesDialog();
                 MovieAPI movieAPI = MovieClient.getMovieAPI();
                 movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
-                System.out.println("onResume: Part 2");
-
             }
         }
         else{
-            if (hasFavoriteSelectionChanged || haveFavoritesChanged){
-                if (showFavoritesOnly){
-                    showLoadingMoviesDialog();
-                    populateFromDB(getActivity(), dialog);
-                    System.out.println("onResume: Part 3");
-
-                }
-                else{
-                    showLoadingMoviesDialog();
-                    MovieAPI movieAPI = MovieClient.getMovieAPI();
-                    movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
-                    System.out.println("onResume: Part 4");
-
-                }
+            if (showFavoritesOnly && (hasFavoriteSelectionChanged || haveFavoritesChanged)){
+                showLoadingMoviesDialog();
+                populateFromDB(getActivity(), dialog);
             }
-            else{
-                System.out.println("onResume: Part 5");
+            else
+            if (!showFavoritesOnly && hasFavoriteSelectionChanged){
+                showLoadingMoviesDialog();
+                MovieAPI movieAPI = MovieClient.getMovieAPI();
+                movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
             }
         }
 
@@ -171,7 +150,7 @@ public class MovieFragment extends Fragment {
     }
 
     private boolean haveFavoritesChanged(Activity activity) {
-        String ids = getFavoriteIds(activity);
+        String ids = FavoritesHelper.getFavoriteIds(activity);
         if (ids != null && !ids.equals(favoriteIds)) {
             this.favoriteIds = ids;
             return true;
@@ -192,19 +171,8 @@ public class MovieFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState == null || !savedInstanceState.containsKey(MOVIE_KEY)) {
-            System.out.println("***********MovieFragment.onCreate: in if");
-
             String sortBy = getSortByDesc(getActivity());
-            System.out.println("sortBy = " + sortBy);
-
             showLoadingMoviesDialog();
-
-            MovieAPI movieAPI = MovieClient.getMovieAPI();
-            movieAPI.getMovies(MovieClient.API_KEY, sortPreference, new MovieCallback(getActivity(), dialog));
-        } else {
-            System.out.println("***********MovieFragment.onCreate: in else");
-            List<Movie> movies = savedInstanceState.getParcelableArrayList(MOVIE_KEY);
-            movieAdapter.notifyDataSetChanged();
         }
     }
 
@@ -227,21 +195,15 @@ public class MovieFragment extends Fragment {
         public void success(MovieResults results, Response response) {
             movieAdapter.clear();
             String json = new String(((TypedByteArray) response.getBody()).getBytes());
-            //      System.out.println("********moviecallback....results = " + json) ;
-            favoriteIds = getFavoriteIds(this.activity);
-            System.out.println("MovieCallback.success");
-            System.out.println("favoriteIds = " + favoriteIds);
-            System.out.println("movies = " + results.getMovies());
+            favoriteIds = FavoritesHelper.getFavoriteIds(this.activity);
             for (Movie movie : results.getMovies()) {
-                System.out.println("\t\t ------ movie = " + 1);
-
                 MovieDetailsContentValues values = new MovieDetailsContentValues();
                 values.putJson(new Gson().toJson(movie));
                 values.putMovieId(movie.getId());
                 values.putPopularity(movie.getPopularity());
                 values.putVoteAverage(movie.getVoteAverage());
                 Uri uri = values.insert(activity.getContentResolver());
-                System.out.println("uri = " + uri);
+
                 movie.setGenres(GenreHelper.getOutput(movie.getGenreIds()));
                 if (shouldAddMovie(getActivity(), favoriteIds, movie)) {
                     movieAdapter.add(movie);
@@ -255,13 +217,11 @@ public class MovieFragment extends Fragment {
             }
         }
 
-
         @Override
         public void failure(RetrofitError error) {
             populateFromDB(this.activity, this.dialog);
         }
     }
-
 
     private String getSortByDesc(Activity activity) {
         return getSortBy(activity) + ".desc";
@@ -274,28 +234,20 @@ public class MovieFragment extends Fragment {
         );
     }
 
-
-    private boolean showFavoritesOnly(Activity activity) {
-        System.out.println("activity = [" + activity + "]");
-        return PreferenceManager.getDefaultSharedPreferences(activity).getBoolean(
-                activity.getString(R.string.pref_favorites_key), false);
-    }
-
     private void populateFromDB(Activity activity, ProgressDialog dialog) {
         movieAdapter.clear();
         MovieDetailsSelection selection = new MovieDetailsSelection();
         String sortBy = getSortBy(activity);
-        System.out.println("onResume: populateFromDB: sortBy = " + sortBy);
         if ("popularity".equals(sortBy)) {
             selection.orderByPopularity(true);
         } else {
             selection.orderByVoteAverage(true);
         }
-        String favoriteIds = getFavoriteIds(getActivity());
+        String favoriteIds = FavoritesHelper.getFavoriteIds(getActivity());
         MovieDetailsCursor movieDetails = selection.query(activity.getContentResolver());
+
         int count = 0;
         while (movieDetails.moveToNext()) {
-            System.out.println("movieDetails.getId() = " + movieDetails.getId() + ", popularity: " + movieDetails.getPopularity() + ", vote average: " + movieDetails.getVoteAverage());
             Movie movie = new Gson().fromJson(movieDetails.getJson(), Movie.class);
             movie.setGenres(GenreHelper.getOutput(movie.getGenreIds()));
             if (shouldAddMovie(getActivity(), favoriteIds, movie)) {
@@ -311,7 +263,7 @@ public class MovieFragment extends Fragment {
         }
 
         //no favorites
-        if (count == 0 && showFavoritesOnly(getActivity())) {
+        if (count == 0 && FavoritesHelper.showFavoritesOnly(getActivity())) {
             Toast.makeText(getActivity(), getActivity().getString(R.string.no_favorites), Toast.LENGTH_SHORT).show();
         }
         //favorites-mode off and no movies from the database
@@ -321,17 +273,8 @@ public class MovieFragment extends Fragment {
         }
     }
 
-
-    private String getFavoriteIds(Activity activity) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        return preferences.getString(FavoritesHelper.FAVORITE_KEY, null);
-    }
-
     private boolean shouldAddMovie(Activity activity, String favoriteIds, Movie movie) {
-        boolean showFavoritesOnly = showFavoritesOnly(activity);
-        System.out.println("MovieCallback.shouldAddMovie");
-        System.out.println("showFavoritesOnly = " + showFavoritesOnly);
-        System.out.println("favoriteIds = " + favoriteIds);
+        boolean showFavoritesOnly = FavoritesHelper.showFavoritesOnly(activity);
         if (!showFavoritesOnly) {
             return true;
         }
@@ -346,7 +289,6 @@ public class MovieFragment extends Fragment {
     private boolean isTwoPaneMode(){
         return (getResources().getBoolean(R.bool.two_pane_mode));
     }
-
 }
 
 

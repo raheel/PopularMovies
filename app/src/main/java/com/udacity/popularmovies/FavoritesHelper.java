@@ -1,5 +1,6 @@
 package com.udacity.popularmovies;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -16,8 +17,6 @@ public class FavoritesHelper {
         String favoriteIds = preferences.getString(FAVORITE_KEY, "");
         favoriteIds += getFavoriteValue(id);
         SharedPreferences.Editor editor = preferences.edit();
-        System.out.println("DetailsActivity.addFavorite: " + id);
-        System.out.println("\tfavoriteIds = " + favoriteIds);
         editor.putString(FAVORITE_KEY, favoriteIds);
         editor.commit();
     }
@@ -26,8 +25,6 @@ public class FavoritesHelper {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         String favoriteIds = preferences.getString(FAVORITE_KEY, "");
         favoriteIds = favoriteIds.replaceAll(getFavoriteValue(id), "");
-        System.out.println("DetailsActivity.removeFavorite: " + id + ", removing: " + getFavoriteValue(id));
-        System.out.println("\tfavoriteIds after = " + favoriteIds);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(FAVORITE_KEY, favoriteIds);
         editor.commit();
@@ -37,12 +34,21 @@ public class FavoritesHelper {
         String favoriteValue = getFavoriteValue(id);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         String favoriteIds = preferences.getString(FAVORITE_KEY, "");
-        System.out.println("DetailsActivity.isFavorited: " + id);
-        System.out.println("\tfavoriteIds = " + favoriteIds);
         return favoriteIds.contains(favoriteValue);
     }
 
     public static String getFavoriteValue(int id) {
         return FAVORITE_DELIMITER + id + FAVORITE_DELIMITER;
+    }
+
+
+    public static String getFavoriteIds(Activity activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        return preferences.getString(FavoritesHelper.FAVORITE_KEY, null);
+    }
+
+    public static boolean showFavoritesOnly(Activity activity) {
+        return PreferenceManager.getDefaultSharedPreferences(activity).getBoolean(
+                activity.getString(R.string.pref_favorites_key), false);
     }
 }

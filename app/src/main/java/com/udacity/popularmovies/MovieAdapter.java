@@ -32,7 +32,6 @@ public class MovieAdapter extends ArrayAdapter<Movie> {
         ViewHolder viewHolder;
 
         Movie movie = getItem(position);
-        System.out.println("movie position = " + position);
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.grid_item_movie, parent, false);
             viewHolder = new ViewHolder();
